@@ -93,7 +93,7 @@ module CounterCulture
               end
               # respect the deleted_at column if it exists
               if model.column_names.include?('deleted_at')
-                join += " AND #{model.table_name}.deleted_at IS NULL"
+                join += " AND #{quote_table_alias(model.table_name)}.deleted_at IS NULL"
               end
             end
             counts_query = counts_query.joins(join)
@@ -147,7 +147,7 @@ module CounterCulture
         @self_table_name ||= if relation_class.table_name == model.table_name
           "#{model.table_name}_#{model.table_name}"
         else
-          model.table_name
+          quote_table_alias(model.table_name)
         end
       end
 
@@ -171,6 +171,8 @@ module CounterCulture
             # self-referential models
             target_table_alias += "_#{target_table}"
           end
+
+          target_table_alias = quote_table_alias(target_table_alias)
 
           if polymorphic?
             # NB: polymorphic only supports one level of relation (at present)
@@ -208,6 +210,9 @@ module CounterCulture
         end
       end
 
+      def quote_table_alias(table_alias)
+        relation_class.connection.quote_column_name(table_alias)
+      end
     end
   end
 end
